@@ -1,8 +1,6 @@
 import React from "react";
 import { Table } from "antd";
 
-React.useLayoutEffect = React.useEffect 
-
 const columns = [
     {
         title: "Name",
@@ -28,11 +26,10 @@ const columns = [
 
 
 const UserInfo = ({user}:any) => {  
-
-    console.log(user);
+    user = user || {name: "", company: "", repos: "", location: ""};
     
     return (
-          <Table columns={columns} pagination={false} dataSource={[user || {}]}/>
+          <Table columns={columns} pagination={false} dataSource={[user]}/>
     )
 };
 

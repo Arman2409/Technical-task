@@ -1,3 +1,4 @@
+import React from "react";
 import UserTable from "./components/UsersTable/UsersTable"
 
 function App() {
