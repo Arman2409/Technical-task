@@ -4,7 +4,7 @@ import ReactDOMServer from "react-dom/server";
 import { Avatar, Button, Table, Input, Row } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import axios, { AxiosResponse } from "axios";
-import { useUpdateEffect } from "usehooks-ts"
+import { useUpdateEffect, useDebounce } from "usehooks-ts"
 import $ from "jquery";
 
 import UserInfo from "./UserInfo/UserInfo";
@@ -25,6 +25,9 @@ const UserTable = () => {
     const [currentShow, setCurrentShow] = useState<number | null>(null);
     const [page, setPage] = useState<number | undefined>(1);
     const [trString, setTrString] = useState<string>("");
+    const [searchValue, setSearchValue] = useState<string>('')
+
+    const debouncedSearchValue = useDebounce<string>(searchValue, 500)
 
     // Refs 
     const openedIndexes = useRef<number[]>([]);
@@ -83,13 +86,6 @@ const UserTable = () => {
         }))
     };
 
-
-    function searchChange(e: any) {
-        if (!e.target.value) {
-            getUsers();
-        };
-    };
-
     function getUsers() {
         axios.get("https://api.github.com/users").then(e => {
             const usersData: any[] = getMapedUsers(e.data);
@@ -135,6 +131,9 @@ const UserTable = () => {
         console.error = () => {};
     }, []);
 
+    useUpdateEffect(() => {
+        search(debouncedSearchValue);
+    }, [debouncedSearchValue])
     useUpdateEffect(() => {
         $(`[id*=info]`).each((i, e) => {
             e.remove();
@@ -208,7 +207,7 @@ const UserTable = () => {
     return (
         <>
             <Row align={"middle"}>
-                <Search className="search-input" onChange={(e) => searchChange(e)} onSearch={(e) => search(e)} />
+                <Search className="search-input" onChange={(e) => setSearchValue(e.target.value)} onSearch={(e) => search(e)} />
             </Row>
             <Table rowClassName={"users-table-row"} className="users-table" columns={columns} dataSource={users} pagination={{ pageSize: 20 }} onChange={(e) => setPage(e.current)} />
         </>
