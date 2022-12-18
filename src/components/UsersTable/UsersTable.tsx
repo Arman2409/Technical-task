@@ -1,10 +1,10 @@
-import React, { useCallback } from "react";
-import { useState, useEffect, useRef, useMemo, useLayoutEffect } from "react";
+import React from "react";
+import { useState,  useRef, useMemo, useEffect } from "react";
 import ReactDOMServer from "react-dom/server";
-import { Avatar, Button, Table, Input, Typography, Row } from "antd";
+import { Avatar, Button, Table, Input, Row } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import axios, { AxiosResponse } from "axios";
-import { useUpdateEffect, useIsomorphicLayoutEffect } from "usehooks-ts"
+import { useUpdateEffect } from "usehooks-ts"
 import $ from "jquery";
 
 import UserInfo from "./UserInfo/UserInfo";
@@ -18,13 +18,11 @@ interface Column {
     dataIndex: string
 };
 
-
 const UserTable = () => {
     // States 
     const [users, setUsers] = useState<any[]>([]);
     const [user, setUser] = useState<any>();
     const [currentShow, setCurrentShow] = useState<number | null>(null);
-    const [info, setInfo] = useState<string>("");
     const [page, setPage] = useState<number | undefined>(1);
     const [trString, setTrString] = useState<string>("");
 
@@ -35,7 +33,7 @@ const UserTable = () => {
     const loadingIndexes = useRef<number[]>([]);
 
     useMemo(() => {
-        // Creating string of the info element 
+        // Creating the string of the info element 
         if(!user || !Object.keys(user).length) {
             return;
         }
@@ -75,14 +73,6 @@ const UserTable = () => {
         },
     ];
 
-
-    function searchChange(e: any) {
-        if (info) setInfo("");
-        if (!e.target.value) {
-            getUsers();
-        };
-    };
-
     function getMapedUsers(arr: any[]) {
         return arr.map((e: any, i: number) => ({
             ...e,
@@ -91,7 +81,14 @@ const UserTable = () => {
             username: e.login,
             avatar: e.avatar_url
         }))
-    }
+    };
+
+
+    function searchChange(e: any) {
+        if (!e.target.value) {
+            getUsers();
+        };
+    };
 
     function getUsers() {
         axios.get("https://api.github.com/users").then(e => {
@@ -104,17 +101,25 @@ const UserTable = () => {
 
     async function search(e: any) {
         axios.get("https://api.github.com/search/users?q=" + e.split(" ").join("") + "in:user").then(e => {
+            // if nothing is found 
+            if (!e.data.items.length) {
+                setUsers([]);
+                return;
+            }
+
             const data = getMapedUsers(e.data.items);
             setUsers(data);
         }).catch(e => {
+            // if nothing is found 
             console.error(e);
-            setInfo("Not Found")
+            setUsers([]);
         });
     };
 
 
     function showMore(e: any) {
         if (currentShow == e || openedIndexes.current.includes(e)) {
+            // if the same button clicked 
             if (e == 0) {
                 setCurrentShow(null);
                 return;
@@ -125,8 +130,9 @@ const UserTable = () => {
         setCurrentShow(e);
     };
 
-    useIsomorphicLayoutEffect(() => {
+    useEffect(() => {
         getUsers();
+        console.error = () => {};
     }, []);
 
     useUpdateEffect(() => {
@@ -149,15 +155,9 @@ const UserTable = () => {
             setTrString("");
             if (openedIndexes.current.includes(opposite)) {
                 openedIndexes.current.splice(openedIndexes.current.indexOf(opposite), 1);
-                loadingIndexes.current.splice(loadingIndexes.current.indexOf(currentShow as any), 1);
             };
             return;
         };
-
-        // Exiting if already loading 
-        if (loadingIndexes.current.includes(currentShow)) {
-            return;
-        }
 
         openedIndexes.current.push(currentShow as number | any);
         loadingIndexes.current.push(currentShow as number | any);
@@ -209,7 +209,6 @@ const UserTable = () => {
         <>
             <Row align={"middle"}>
                 <Search className="search-input" onChange={(e) => searchChange(e)} onSearch={(e) => search(e)} />
-                <Typography style={{ color: "red", marginRight: "10px" }}>{info}</Typography>
             </Row>
             <Table rowClassName={"users-table-row"} className="users-table" columns={columns} dataSource={users} pagination={{ pageSize: 20 }} onChange={(e) => setPage(e.current)} />
         </>
