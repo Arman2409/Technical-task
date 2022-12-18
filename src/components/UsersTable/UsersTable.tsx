@@ -96,7 +96,8 @@ const UserTable = () => {
     };
 
     async function search(e: any) {
-        axios.get("https://api.github.com/search/users?q=" + e.split(" ").join("") + "in:user").then(e => {
+        if (e) {
+        axios.get("https://api.github.com/search/users?q=" + e.split(" ").join("")).then(e => {
             // if nothing is found 
             if (!e.data.items.length) {
                 setUsers([]);
@@ -105,11 +106,14 @@ const UserTable = () => {
 
             const data = getMapedUsers(e.data.items);
             setUsers(data);
-        }).catch(e => {
-            // if nothing is found 
-            console.error(e);
-            setUsers([]);
-        });
+            }).catch(e => {
+                // if nothing is found 
+                console.error(e);
+                setUsers([]);
+            });
+        } else {
+            getUsers();
+        }
     };
 
 
@@ -119,7 +123,8 @@ const UserTable = () => {
             if (e == 0) {
                 setCurrentShow(null);
                 return;
-            }
+            };
+
             setCurrentShow(-e);
             return;
         }
@@ -133,7 +138,8 @@ const UserTable = () => {
 
     useUpdateEffect(() => {
         search(debouncedSearchValue);
-    }, [debouncedSearchValue])
+    }, [debouncedSearchValue]);
+
     useUpdateEffect(() => {
         $(`[id*=info]`).each((i, e) => {
             e.remove();
@@ -141,7 +147,7 @@ const UserTable = () => {
         $('.loading-tr').each((i, e) => {
             e.remove();
         });
-    }, [users, page])
+    }, [users, page]);
 
     useUpdateEffect(() => {
         // Closing the info table 
@@ -176,10 +182,11 @@ const UserTable = () => {
         (async function () {
             currentRef.current = currentShow;
             const repos:AxiosResponse = await axios.get(newUser.repos_url);
+            const followers:AxiosResponse = await axios.get(newUser.followers_url);
+            newUser.followers = followers.data.length;
             newUser.repos = repos.data.length;
             userRef.current = newUser;
 
-            // Setting the user with repos for useMemo 
             setUser(newUser);
         })()
     }, [currentShow]);
@@ -206,10 +213,17 @@ const UserTable = () => {
 
     return (
         <>
-            <Row align={"middle"}>
-                <Search className="search-input" onChange={(e) => setSearchValue(e.target.value)} onSearch={(e) => search(e)} />
-            </Row>
-            <Table rowClassName={"users-table-row"} className="users-table" columns={columns} dataSource={users} pagination={{ pageSize: 20 }} onChange={(e) => setPage(e.current)} />
+            <Search 
+              className="search-input" 
+              onChange={(e) => setSearchValue(e.target.value)} 
+              onSearch={(e) => search(e)} />
+            <Table 
+              rowClassName={"users-table-row"} 
+              className="users-table" 
+              columns={columns} 
+              dataSource={users} 
+              pagination={{ pageSize: 20 }} 
+              onChange={(e) => setPage(e.current)} />
         </>
     )
 };

@@ -21,6 +21,11 @@ const columns = [
         title: "Repositories",
         dataIndex: "repos",
         key: "repos"
+    },
+    {
+        title: "Followers",
+        dataIndex: "followers",
+        key: "followers"
     }
 ];
 
@@ -29,7 +34,10 @@ const UserInfo = ({user}:any) => {
     user = user || {name: "", company: "", repos: "", location: ""};
     
     return (
-          <Table columns={columns} pagination={false} dataSource={[user]}/>
+          <Table 
+            columns={columns} 
+            pagination={false} 
+            dataSource={[user]}/>
     )
 };
 
